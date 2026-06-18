@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShoreHaven Wealth — Account Tracker</title>
+<style>
+  :root{
+    --navy:#13313a; --navy-2:#1c4753;
+    --brand:#13313a; --brand-2:#1c4753;
+    --amber:#c2974a; --amber-soft:#e0c184;
+    --red:#9e2a2b; --paper:#f6f2e9; --card:#ffffff;
+    --ink:#26303a; --muted:#6b7884; --line:#e6dfd0;
+    --green:#3f7d54; --green-bg:#e7f0ea;
+    --amber-bg:#f6edda; --red-bg:#f4e3e3; --gray-bg:#eef0f2;
+    --blue:#3d6a99; --blue-bg:#e6eef6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;padding:0 0 60px;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px;}
+  h1,h2,h3,.serif{font-family:Georgia,"Times New Roman",serif;}
+
+  header{background:var(--brand);color:#fff;padding:34px 0 30px;border-bottom:4px solid var(--amber);}
+  .head-row{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;}
+  .brand-eyebrow{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--amber-soft);margin-bottom:8px;}
+  header h1{font-size:30px;font-weight:700;letter-spacing:.3px;line-height:1.15;}
+  .tagline{color:var(--amber-soft);font-size:12px;letter-spacing:2.5px;text-transform:uppercase;margin-top:8px;}
+  .head-meta{text-align:right;font-size:13px;color:#c5cfd9;}
+  .head-meta strong{color:#fff;}
+  .status-strip{margin-top:22px;display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);padding:8px 16px;border-radius:30px;font-size:13px;}
+  .pulse{width:9px;height:9px;border-radius:50%;background:var(--amber-soft);box-shadow:0 0 0 0 rgba(201,163,90,.6);animation:p 2s infinite;}
+  @keyframes p{0%{box-shadow:0 0 0 0 rgba(201,163,90,.5);}70%{box-shadow:0 0 0 10px rgba(201,163,90,0);}100%{box-shadow:0 0 0 0 rgba(201,163,90,0);}}
+
+  section{margin-top:34px;}
+  .sec-title{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+  .sec-title h2{font-size:20px;color:var(--navy);}
+  .sec-title .bar{width:30px;height:3px;background:var(--amber);border-radius:2px;}
+  .sec-note{font-size:13px;color:var(--muted);margin:-8px 0 16px;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 24px;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+
+  /* Decisions box */
+  .decisions{background:linear-gradient(135deg,var(--brand) 0%,var(--brand-2) 100%);color:#fff;border-radius:14px;padding:24px 26px;border:1px solid var(--brand-2);margin-top:30px;}
+  .decisions .tag{display:inline-block;background:var(--amber);color:var(--navy);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:5px;}
+  .decisions h2{font-size:21px;margin:12px 0 4px;}
+  .decisions .sub{color:#aeb9c4;font-size:12.5px;margin-bottom:14px;}
+  .dlist{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:10px 26px;}
+  .dlist li{position:relative;padding-left:24px;font-size:14px;line-height:1.4;color:#eef2f5;}
+  .dlist li::before{content:"○";position:absolute;left:0;top:0;color:var(--amber-soft);font-weight:700;}
+  .dlist li b{color:#fff;}
+
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.3px;white-space:nowrap;}
+  .pill.done{background:var(--green-bg);color:var(--green);}
+  .pill.prog{background:var(--amber-bg);color:#9a6b15;}
+  .pill.block{background:var(--red-bg);color:var(--red);}
+  .pill.wait{background:var(--gray-bg);color:var(--muted);}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);padding:0 12px 10px;border-bottom:2px solid var(--line);font-weight:700;}
+  td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td.req{font-weight:600;color:var(--navy);}
+  td.owner{color:var(--muted);white-space:nowrap;}
+
+  .check{list-style:none;}
+  .check li{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;}
+  .check li:last-child{border-bottom:none;}
+  .check .box{width:20px;height:20px;border-radius:5px;border:2px solid var(--line);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
+  .check .box.on{background:var(--green);border-color:var(--green);}
+  .check .box.now{background:var(--amber);border-color:var(--amber);}
+  .check .ct{flex:1;}
+  .check .ct b{color:var(--navy);}
+  .check .ct .meta{font-size:12px;color:var(--muted);margin-top:2px;}
+
+  .winlist{list-style:none;columns:2;column-gap:30px;}
+  .winlist li{position:relative;padding:7px 0 7px 26px;font-size:13.5px;break-inside:avoid;color:var(--ink);}
+  .winlist li::before{content:"✓";position:absolute;left:0;top:7px;color:var(--green);font-weight:700;}
+
+  .launch{background:linear-gradient(135deg,var(--brand) 0%,var(--brand-2) 100%);color:#fff;border-radius:14px;padding:24px 28px;border:1px solid var(--brand-2);}
+  .launch .tag{display:inline-block;background:var(--amber);color:var(--navy);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:5px;}
+  .launch h3{font-size:22px;margin:12px 0 6px;}
+  .launch p{color:#cdd6df;font-size:14px;max-width:72ch;}
+  .launch-stats{display:flex;gap:30px;margin-top:18px;flex-wrap:wrap;}
+  .launch-stats div .n{font-family:Georgia,serif;font-size:22px;color:var(--amber-soft);font-weight:700;}
+  .launch-stats div .l{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#aeb9c4;margin-top:2px;}
+
+  .qtopic{border:1px solid var(--line);border-radius:12px;padding:18px 20px;background:#fcfaf6;margin-bottom:14px;}
+  .qtopic h3{font-size:16px;color:var(--navy);display:flex;align-items:center;gap:10px;}
+  .qtopic .goal{font-size:12.5px;color:var(--muted);margin:4px 0 10px;font-style:italic;}
+  .qtopic ol{margin:0;padding-left:20px;}
+  .qtopic li{font-size:13.5px;color:var(--ink);padding:4px 0;line-height:1.45;}
+  .qtopic li.star{font-weight:600;color:var(--navy);}
+  .qtopic li.star::marker{color:var(--amber);}
+  .star-key{color:var(--amber);font-weight:700;}
+  .tnum{background:var(--amber);color:#fff;font-family:Georgia,serif;font-size:13px;font-weight:700;width:24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+  .spine{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .spine .p{border:1px solid var(--line);border-radius:10px;padding:16px 18px;background:#fcfaf6;}
+  .spine .p .h{font-weight:700;color:var(--navy);font-size:14px;}
+  .spine .p .d{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5;}
+
+  .path{list-style:none;counter-reset:step;}
+  .path li{position:relative;padding:10px 0 10px 38px;border-bottom:1px solid var(--line);font-size:14px;color:var(--ink);}
+  .path li:last-child{border-bottom:none;}
+  .path li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:9px;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+
+  .disc{list-style:none;}
+  .disc li{padding:9px 0 9px 22px;border-bottom:1px solid var(--line);position:relative;font-size:14px;color:var(--ink);}
+  .disc li:last-child{border-bottom:none;}
+  .disc li::before{content:"";position:absolute;left:0;top:16px;width:8px;height:8px;border-radius:50%;background:var(--amber);}
+  .disc li b{color:var(--navy);}
+
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 16px;position:relative;overflow:hidden;}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--amber);}
+  .kpi .num{font-family:Georgia,serif;font-size:25px;color:var(--navy);font-weight:700;line-height:1;}
+  .kpi .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:8px;}
+  .kpi .sub{font-size:12px;color:var(--green);margin-top:4px;font-weight:600;}
+  .kpi .sub.flat{color:var(--muted);font-weight:500;}
+
+  .cal-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;color:var(--muted);align-items:center;}
+  .cal-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dotc{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .cal-h{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);text-align:center;font-weight:700;padding-bottom:4px;}
+  .cell{background:#fcfaf6;border:1px solid var(--line);border-radius:8px;min-height:74px;padding:6px 7px;font-size:11px;}
+  .cell.out{background:#f1eee7;opacity:.5;}
+  .cell.today{border:2px solid var(--amber);background:#fff;}
+  .cell .d{font-weight:700;color:var(--navy);font-size:12px;}
+  .cell .d .tdy{font-size:9px;color:var(--amber);font-weight:700;text-transform:uppercase;margin-left:3px;}
+  .chip{display:block;margin-top:4px;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;line-height:1.25;color:#fff;}
+  .chip.post{background:var(--amber);}
+  .chip.story{background:var(--blue);}
+  .chip.shoot{background:var(--green);}
+
+  /* hoverable source */
+  .hsrc{font-size:12px;font-weight:600;color:var(--blue);border-bottom:1px dotted var(--blue);cursor:help;text-decoration:none;}
+  .hsrc:hover{background:var(--blue-bg);}
+
+  .qname{font-family:Georgia,serif;font-size:16px;color:var(--navy);margin-bottom:4px;}
+  .qrole{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--amber);font-weight:700;margin-bottom:10px;}
+  .quotes{list-style:none;}
+  .quotes li{position:relative;padding:11px 0 11px 24px;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--ink);line-height:1.55;font-style:italic;}
+  .quotes li:last-child{border-bottom:none;}
+  .quotes li::before{content:"\201C";position:absolute;left:0;top:12px;color:var(--amber);font-family:Georgia,serif;font-size:22px;font-weight:700;line-height:1;}
+  .qtabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .qtab{padding:8px 16px;border:1px solid var(--line);border-radius:30px;background:#fff;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;}
+  .qtab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .qpanel{display:none;}
+  .qpanel.active{display:block;}
+
+  footer{margin-top:42px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);}
+  footer b{color:var(--navy);}
+  .note{background:var(--amber-bg);border:1px solid #e7d3a3;border-radius:10px;padding:13px 16px;font-size:13px;color:#7a5a14;margin-top:14px;}
+  a.tlink{color:var(--blue);text-decoration:none;font-weight:600;}
+  a.tlink:hover{text-decoration:underline;}
+
+  @media(max-width:880px){
+    .kpis{grid-template-columns:repeat(2,1fr);}
+    .grid-2,.spine{grid-template-columns:1fr;}
+    .dlist,.winlist{grid-template-columns:1fr;columns:1;}
+    .head-meta{text-align:left;}
+    .calendar{font-size:10px;}
+    .cell{min-height:62px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN GATE -->
+<div id="gate" style="position:fixed;inset:0;background:#13313a;display:flex;align-items:center;justify-content:center;z-index:99999;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <form id="gateForm" autocomplete="off" style="background:#fff;padding:34px 32px;border-radius:14px;width:330px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.35);border-top:4px solid #c2974a;">
+    <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#c2974a;font-weight:700;margin-bottom:8px;">ShoreHaven × Player/Coach</div>
+    <h2 style="font-family:Georgia,serif;color:#13313a;font-size:22px;margin:0 0 4px;">Account Tracker</h2>
+    <div style="font-size:13px;color:#6b7884;margin-bottom:18px;">Please sign in to continue.</div>
+    <input id="gu" placeholder="Username" autocapitalize="none" style="width:100%;padding:11px 12px;border:1px solid #e6dfd0;border-radius:8px;font-size:14px;margin-bottom:10px;">
+    <input id="gp" type="password" placeholder="Password" style="width:100%;padding:11px 12px;border:1px solid #e6dfd0;border-radius:8px;font-size:14px;margin-bottom:14px;">
+    <button type="submit" style="width:100%;padding:11px;background:#13313a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Enter</button>
+    <div id="gerr" style="color:#9e2a2b;font-size:12.5px;margin-top:10px;min-height:16px;"></div>
+  </form>
+</div>
+<script>
+(function(){
+  var USER="shorehaven", PASS="RedBank2026";
+  var gate=document.getElementById('gate');
+  function unlock(){gate.style.display='none';}
+  try{ if(sessionStorage.getItem('sh_auth')==='1') unlock(); }catch(e){}
+  document.getElementById('gateForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    var u=document.getElementById('gu').value.trim().toLowerCase();
+    var p=document.getElementById('gp').value;
+    if(u===USER && p===PASS){ try{sessionStorage.setItem('sh_auth','1');}catch(e){} unlock(); }
+    else { document.getElementById('gerr').textContent='Incorrect username or password.'; }
+  });
+})();
+</script>
+
+<header>
+  <div class="wrap head-row">
+    <div>
+      <div class="brand-eyebrow">ShoreHaven Wealth × Player/Coach</div>
+      <h1>Account Tracker</h1>
+      <div class="tagline">Status Overview</div>
+    </div>
+    <div class="head-meta">
+      <div><strong>June 18, 2026</strong></div>
+      <div>Account leads: <strong>Andrew Stadelberger</strong></div>
+      <div><strong>Natalie Christ</strong></div>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="status-strip"><span class="pulse"></span> <strong style="font-weight:600">Main focus: fresh on-camera session — Thu June 25, 10:30am–12:30pm</strong></div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- DECISIONS NEEDED TODAY -->
+  <div class="decisions">
+    <span class="tag">Decisions needed today</span>
+    <h2>Six quick answers and we're moving</h2>
+    <div class="sub">The final shoot time below resolves the earlier 9:00am vs. 10:30am back-and-forth — so everyone walks in with the same expectation.</div>
+    <ul class="dlist">
+      <li><b>Final shoot time</b> — confirm June 25, 10:30am–12:30pm</li>
+      <li><b>Who's attending</b> — Mike Durso, Mike Lombardi (optional Riley / Sheryl)</li>
+      <li><b>Format</b> — interview-led Q&amp;A vs. conversational two-person sit-down</li>
+      <li><b>The 15 must-answer questions</b> — pick from the bank below</li>
+      <li><b>Testimonial guest</b> — adding one or not?</li>
+      <li><b>Approve this week's creative</b> — Knicks, World Cup, Under Pressure, Boomer</li>
+    </ul>
+  </div>
+
+  <!-- WINS SINCE LAST MEETING -->
+  <section>
+    <div class="sec-title"><span class="bar"></span><h2>Wins since last meeting</h2></div>
+    <div class="card">
+      <ul class="winlist">
+        <li>June 25 shoot locked — 10:30am–12:30pm</li>
+        <li>Seven-topic question bank built</li>
+        <li>15 priority questions identified</li>
+        <li>Knicks creative prepared</li>
+        <li>World Cup creative prepared</li>
+        <li>"Staying Calm Under Pressure" carousel prepared</li>
+        <li>Mailer redesign completed</li>
+        <li>Boomer piece ready for review</li>
+        <li>July 3–4 and July 20 posts approved &amp; queued</li>
+        <li>Meta traffic &amp; engagement up sharply over the prior 60 days</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- MAIN AGENDA: SHOOT -->
+  <section>
+    <div class="sec-title"><span class="bar"></span><h2>Main agenda — June 25 on-camera session</h2></div>
+    <div class="launch">
+      <span class="tag">Main agenda item</span>
+      <h3>Fresh On-Camera Session — Thursday, June 25 · 10:30am–12:30pm</h3>
+      <p>Fresh footage to anchor the page and the social series — seven evergreen topics, one morning, a month-plus of cutdowns. Today we lock talent, format, and the 15 priority questions. July 2 is held as an overflow date if we need additional footage or a testimonial.</p>
+      <div class="launch-stats">
+        <div><div class="n">Jun 25</div><div class="l">Shoot · 10:30am</div></div>
+        <div><div class="n">7</div><div class="l">Topics</div></div>
+        <div><div class="n">15</div><div class="l">★ Priority questions</div></div>
+        <div><div class="n">Jul 2</div><div class="l">Overflow hold</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h3 style="font-size:15px;color:var(--navy);margin-bottom:6px">To lock in today</h3>
+      <ul class="check">
+        <li><span class="box now">●</span><div class="ct"><b>Talent on camera</b><div class="meta">Mike &amp; Mike — optional interviewer (Riley / Sheryl) to make it conversational</div></div></li>
+        <li><span class="box now">●</span><div class="ct"><b>Format</b><div class="meta">Interview-led Q&amp;A or two-person sit-down</div></div></li>
+        <li><span class="box now">●</span><div class="ct"><b>The 15 ★ priority questions</b><div class="meta">Narrow the bank below to the must-answers</div></div></li>
+        <li><span class="box now">●</span><div class="ct"><b>Testimonial guest</b><div class="meta">If yes, Mike confirms a client to film the same morning</div></div></li>
+        <li><span class="box on">✓</span><div class="ct"><b>Date + studio</b><div class="meta">Locked — June 25, 10:30am at the Player/Coach studio</div></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- QUESTION BANK -->
+  <section>
+    <div class="sec-title"><span class="bar"></span><h2>The topics we built — question bank</h2></div>
+    <p class="sec-note">Seven topics for Mike &amp; Mike, with questions for each. <span class="star-key">★</span> = the 15 priority must-asks. Edit freely today.</p>
+
+    <div class="qtopic">
+      <h3><span class="tnum">1</span> World Events &amp; The Markets</h3>
+      <div class="goal">Separate "headline noise" from the things that actually move a portfolio.</div>
+      <ol>
+        <li class="star">★ When a big headline hits — a war, an election, a tariff — what's the first thing you tell clients who call you that morning?</li>
+        <li>How do you tell the difference between a headline that's noise vs. a real shift in the landscape?</li>
+        <li>Are there world events right now you think investors are under-reacting to?</li>
+        <li class="star">★ What's the biggest mistake you see regular investors make when the news cycle gets loud?</li>
+        <li>If someone feels anxious every time they open their phone, what would you tell them to do this week?</li>
+      </ol>
+    </div>
+
+    <div class="qtopic">
+      <h3><span class="tnum">2</span> Inflation</h3>
+      <div class="goal">Turn inflation from an abstract number into "what it means for my money."</div>
+      <ol>
+        <li class="star">★ In plain English, where does inflation stand right now vs. where the Fed wants it?</li>
+        <li class="star">★ For a diversified portfolio, what tends to hold up best when inflation runs hot?</li>
+        <li>People hear "sticky inflation" — what does that actually mean for a retirement plan?</li>
+        <li>How should someone think about cash right now? Is holding it costing them more than they realize?</li>
+        <li class="star">★ If a client came in today worried inflation is eating their savings, what's the conversation you'd have?</li>
+      </ol>
+    </div>
+
+    <div class="qtopic">
+      <h3><span class="tnum">3</span> Gold &amp; Silver</h3>
+      <div class="goal">Demystify precious metals — a portfolio tool, not a doomsday play.</div>
+      <ol>
+        <li class="star">★ Gold's been on a historic run. What's driving it, and is it too late for a regular investor to participate?</li>
+        <li>What's the case for silver vs. gold right now — same story or different?</li>
+        <li>How do you actually own gold — ETFs, physical, mining stocks? What do you recommend for most clients?</li>
+        <li>Is there a "right" percentage of a portfolio to hold in metals, or does it depend on the person?</li>
+        <li class="star">★ What's the biggest myth about gold you wish would go away?</li>
+      </ol>
+    </div>
+
+    <div class="qtopic">
+      <h3><span class="tnum">4</span> Bitcoin</h3>
+      <div class="goal">Treat Bitcoin as a legitimate asset class — no hype, no dismissal.</div>
+      <ol>
+        <li class="star">★ A few years ago, most advisors wouldn't touch Bitcoin. What changed?</li>
+        <li>With spot ETFs widely available, how are you thinking about Bitcoin inside a real client portfolio?</li>
+        <li>How do you answer the client who says, "just put 10% of my money in Bitcoin"?</li>
+        <li>What's the difference between "I believe in Bitcoin long-term" and "I should own Bitcoin"?</li>
+        <li class="star">★ For someone who's never owned crypto but feels like they're missing out, what's the responsible first step?</li>
+        <li>How do you think about Bitcoin's volatility — avoid it, size it smaller, or something else?</li>
+      </ol>
+    </div>
+
+    <div class="qtopic">
+      <h3><span class="tnum">5</span> Tokenization</h3>
+      <div class="goal">The topic most viewers won't know yet — a simple explainer and a reason to care.</div>
+      <ol>
+        <li class="star">★ Explain tokenization like I'm a smart person who's never heard the word. What is it?</li>
+        <li>Why are BlackRock, Fidelity and the big banks suddenly talking about tokenized assets?</li>
+        <li>What could get tokenized that would actually matter to a regular investor — real estate, bonds, private funds?</li>
+        <li>Is tokenization the same conversation as crypto, or totally separate?</li>
+        <li class="star">★ If this plays out the way believers think, what changes for a regular investor in five years?</li>
+        <li>What should someone be skeptical of when they hear "tokenization"?</li>
+      </ol>
+    </div>
+
+    <div class="qtopic">
+      <h3><span class="tnum">6</span> Job Losses Due to AI</h3>
+      <div class="goal">The most personal topic — connect it back to financial planning.</div>
+      <ol>
+        <li class="star">★ When a client worries their industry will get disrupted by AI, what's the first question you ask them?</li>
+        <li>How should someone adjust their plan if there's a real chance they're displaced in five years?</li>
+        <li>What's the right size of an emergency fund in an AI-disruption era? Is "3–6 months" still enough?</li>
+        <li>Are there sectors or company types you're leaning into or pulling back from because of AI?</li>
+        <li class="star">★ For a parent worried about their kid's career path, what would you tell them?</li>
+        <li>Is there an opportunity side to this story people aren't talking about enough?</li>
+      </ol>
+    </div>
+
+    <div class="qtopic">
+      <h3><span class="tnum">7</span> Changing Landscapes — Big-Picture Wrap</h3>
+      <div class="goal">Pull it all together. The "evergreen" clips that age well.</div>
+      <ol>
+        <li class="star">★ Name the two or three biggest shifts in investing right now that the average person is sleeping on.</li>
+        <li>What's something you believed about investing five years ago that you've updated on?</li>
+        <li>People feel the rules of money are being rewritten — gold, crypto, AI, inflation all at once. Are they right, or is this just how every era feels?</li>
+        <li class="star">★ If a viewer remembers one thing from this whole conversation, what do you want it to be?</li>
+        <li>What's the question clients should be asking you right now that they aren't?</li>
+      </ol>
+    </div>
+    <div class="note"><b>Also worth grabbing while we're rolling:</b> advisor succession planning (the questions a client should ask), a 1-minute portfolio-update video, and a quick "staying calm at market highs" piece for the carousel.</div>
+  </section>
+
+  <!-- SHOOT OUTPUT MAP -->
+  <section>
+    <div class="sec-title"><span class="bar"></span><h2>What June 25 produces</h2></div>
+    <p class="sec-note">One morning in the studio becomes a content engine — here's the expected output.</p>
+    <div class="card">
+      <ul class="disc" style="columns:2;column-gap:40px;">
+        <li><b>1</b> long-form anchor conversation</li>
+        <li><b>7</b> topic-based video segments</li>
+        <li><b>15</b> priority short-form clips</li>
+        <li><b>5–7</b> quote graphics</li>
+        <li><b>3–5</b> carousel concepts</li>
+        <li><b>1</b> website / landing-page hero cut</li>
+        <li><b>1</b> "market update" clip</li>
+        <li><b>1</b> testimonial clip — if a guest is confirmed</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PENDING APPROVALS / AGING -->
+  <section>
+    <div class="sec-title"><span class="bar"></span><h2>Pending approvals &amp; aging items</h2></div>
+    <p class="sec-note">What's waiting, since when, and who unblocks it. Most of these are waiting on a yes — not on production.</p>
+    <div class="card">
+      <table>
+        <thead><tr><th style="width:26%">Item</th><th>Ready since</th><th>Blocker</th><th style="width:140px">Needed from</th><th style="width:70px">Link</th></tr></thead>
+        <tbody>
+          <tr><td class="req">Mailer redesign</td><td class="owner">Apr 23</td><td>Copy + target send date</td><td><span class="pill block">ShoreHaven</span></td><td class="owner">—</td></tr>
+          <tr><td class="req">Golfer (Jhared Hack) mailer</td><td class="owner">Apr 23</td><td>Content + approval</td><td><span class="pill block">ShoreHaven</span></td><td><a class="tlink" href="https://www.canva.com/design/DAHMqREqyCk/pP2-vxsBcdyQk9chtrtqJQ/edit" target="_blank">Canva ↗</a></td></tr>
+          <tr><td class="req">Knicks / World Cup posts</td><td class="owner">Jun 17</td><td>Approval to publish</td><td><span class="pill block">ShoreHaven</span></td><td><a class="tlink" href="https://www.canva.com/design/DAHMqREqyCk/pP2-vxsBcdyQk9chtrtqJQ/edit" target="_blank">Canva ↗</a></td></tr>
+          <tr><td class="req">"Staying Calm Under Pressure" carousel</td><td class="owner">Jun 11</td><td>Approval to publish</td><td><span class="pill block">ShoreHaven</span></td><td><a class="tlink" href="https://www.canva.com/design/DAHMqREqyCk/pP2-vxsBcdyQk9chtrtqJQ/edit" target="_blank">Canva ↗</a></td></tr>
+          <tr><td class="req">Boomer piece</td><td class="owner">Jun 17</td><td>Final direction / copy</td><td><span class="pill prog">P/C → ShoreHaven</span></td><td class="owner">—</td></tr>
+          <tr><td class="req">Financial Definitions carousels</td><td class="owner">Jun 16–17</td><td>P/C review, then approval</td><td><span class="pill prog">P/C → ShoreHaven</span></td><td><a class="tlink" href="https://docs.google.com/document/d/15JO_bEetIC62xSZAbLceHNs5wBiO5--ovMecrORzc0Q/edit" target="_blank">Doc ↗</a></td></tr>
+          <tr><td class="req">Text-bubble ads</td><td class="owner">Jun 16–17</td><td>Final creative review</td><td><span class="pill prog">P/C</span></td><td class="owner">—</td></tr>
+          <tr><td class="req">5 blogs</td><td class="owner">May</td><td>Final pass</td><td><span class="pill prog">Mike L.</span></td><td><a class="tlink" href="https://docs.google.com/document/d/1eyDT9cG7qcd29pQH9S3FR6xMUL4OkXM8U-_Go78tkng/edit" target="_blank">Doc ↗</a></td></tr>
+        </tbody>
+      </table>
+      <div class="note" style="margin-top:14px"><b>For the walk-through:</b> the <a class="tlink" href="https://www.canva.com/design/DAHMqREqyCk/pP2-vxsBcdyQk9chtrtqJQ/edit" target="_blank">Knicks / World Cup / Jhared Hack patience Canva ↗</a> holds the social creative; blogs and the content-review doc are linked in the table above.</div>
+    </div>
+  </section>
+
+  <!-- WHAT WE NEED -->
+  <section>
+    <div class="sec-title"><span class="bar"></span><h2>What we need from you</h2></div>
+    <div class="card">
+      <table>
+        <thead><tr><th style="width:58%">Item</th><th>Owner</th><th style="width:110px">Status</th></tr></thead>
+        <tbody>
+          <tr><td class="req">Mailer copy + the date you want it to go out</td><td class="owner">ShoreHaven</td><td><span class="pill block">Needed</span></td></tr>
+          <tr><td class="req">Jhared Hack (golfer) mailer content</td><td class="owner">ShoreHaven</td><td><span class="pill block">Needed</span></td></tr>
+          <tr><td class="req">Approve creative to post this week (Knicks, World Cup, Under Pressure, Boomer)</td><td class="owner">ShoreHaven</td><td><span class="pill block">Needed</span></td></tr>
+          <tr><td class="req">Confirm a testimonial guest for June 25</td><td class="owner">Mike L.</td><td><span class="pill block">Needed</span></td></tr>
+          <tr><td class="req">3 photos — Larry's 50th / Beacon party</td><td class="owner">Mike L.</td><td><span class="pill block">Needed</span></td></tr>
+          <tr><td class="req">Finalize the 5 blogs</td><td class="owner">Mike L.</td><td><span class="pill prog">In progress</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- CALENDAR -->
+  <section>
+    <div class="sec-title"><span class="bar"></span><h2>Posting &amp; production calendar</h2></div>
+    <div class="card">
+      <div class="cal-legend">
+        <span><i class="dotc" style="background:var(--amber)"></i> Post</span>
+        <span><i class="dotc" style="background:var(--green)"></i> Shoot / production</span>
+        <span><i class="dotc" style="background:var(--blue)"></i> Meeting</span>
+      </div>
+      <div class="calendar">
+        <div class="cal-h">Sun</div><div class="cal-h">Mon</div><div class="cal-h">Tue</div><div class="cal-h">Wed</div><div class="cal-h">Thu</div><div class="cal-h">Fri</div><div class="cal-h">Sat</div>
+
+        <div class="cell"><div class="d">14</div></div>
+        <div class="cell"><div class="d">15</div></div>
+        <div class="cell"><div class="d">16</div></div>
+        <div class="cell"><div class="d">17</div></div>
+        <div class="cell today"><div class="d">18 <span class="tdy">Today</span></div><span class="chip story">Overview · 9am</span><span class="chip post">Knicks post</span></div>
+        <div class="cell"><div class="d">19</div></div>
+        <div class="cell"><div class="d">20</div></div>
+
+        <div class="cell"><div class="d">21</div></div>
+        <div class="cell"><div class="d">22</div><span class="chip post">"Under Pressure"</span></div>
+        <div class="cell"><div class="d">23</div></div>
+        <div class="cell"><div class="d">24</div><span class="chip post">World Cup post</span></div>
+        <div class="cell"><div class="d">25</div><span class="chip shoot">Shoot · 10:30am</span></div>
+        <div class="cell"><div class="d">26</div></div>
+        <div class="cell"><div class="d">27</div></div>
+
+        <div class="cell"><div class="d">28</div></div>
+        <div class="cell"><div class="d">29</div><span class="chip post">Boomer piece</span></div>
+        <div class="cell"><div class="d">30</div></div>
+        <div class="cell out"><div class="d">1</div></div>
+        <div class="cell out"><div class="d">2</div><span class="chip shoot">Videos approved by</span></div>
+        <div class="cell out"><div class="d">3</div><span class="chip post">Independence Day</span></div>
+        <div class="cell out"><div class="d">4</div></div>
+      </div>
+      <div class="note" style="margin-top:14px"><b>Into July:</b> shoot videos start posting <b>July 8</b> · <b>6-Year Anniversary</b> post July 20 · July 2 overflow shoot hold (9–11am) if needed.</div>
+    </div>
+  </section>
+
+  <!-- CONTENT STRATEGY SPINE -->
+  <section>
+    <div class="sec-title"><span class="bar"></span><h2>Content strategy spine</h2></div>
+    <p class="sec-note">The logic behind the queue. We build ShoreHaven around three repeatable lanes.</p>
+    <div class="spine">
+      <div class="p"><div class="h">1 · Calm in volatile moments</div><div class="d">Markets, inflation, world events, AI disruption, and changing investor behavior.</div></div>
+      <div class="p"><div class="h">2 · Local authority &amp; personality</div><div class="d">Red Bank NJ, World Cup / Jersey moments, Knicks, Boomer, Jhared Hack, firm milestones.</div></div>
+      <div class="p"><div class="h">3 · Plain-English wealth education</div><div class="d">Financial definitions, advisor questions, succession planning, retirement and portfolio conversations.</div></div>
+    </div>
+    <div class="note">Not one-off posting — a repeatable voice: <b>calm, local, intelligent, human.</b></div>
+  </section>
+
+  <!-- COMPLIANCE PATH -->
+  <section>
+    <div class="sec-title"><span class="bar"></span><h2>Compliance path</h2></div>
+    <p class="sec-note">How a piece moves from draft to posted. Each asset is tagged <span class="pill done">Cleared</span> <span class="pill wait">No compliance needed</span> or <span class="pill prog">Needs compliance</span>.</p>
+    <div class="card">
+      <ul class="path">
+        <li>P/C drafts and edits the content.</li>
+        <li>ShoreHaven reviews for voice and accuracy.</li>
+        <li>Disclaimer / compliance review only where needed.</li>
+        <li>Final approval logged before posting.</li>
+        <li>Time-sensitive posts flagged separately so they don't die in review.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- NEXT 7 DAYS + OPEN RISKS -->
+  <section>
+    <div class="grid-2">
+      <div>
+        <div class="sec-title"><span class="bar"></span><h2>Next 7 days</h2></div>
+        <div class="card">
+          <ul class="disc">
+            <li>Confirm June 25 shoot details</li>
+            <li>Finalize the priority questions</li>
+            <li>Approve Knicks / World Cup / Under Pressure / Boomer</li>
+            <li>Resolve mailer copy + send date</li>
+            <li>Begin packaging June 25 footage for the July rollout</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="sec-title"><span class="bar"></span><h2>Open risks</h2></div>
+        <div class="card">
+          <ul class="disc">
+            <li>Shoot value depends on locking the priority questions before filming.</li>
+            <li>Mailer can't move without copy + approval.</li>
+            <li>Timely posts lose value if approvals come after the moment passes.</li>
+            <li>A testimonial guest must be confirmed before shoot day.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEWS / ALERTS TRACKER -->
+  <section>
+    <div class="sec-title"><span class="bar"></span><h2>In the news — alerts tracker</h2></div>
+    <p class="sec-note">Awards, big announcements, and media appearances for the ShoreHaven team — fuel for timely content. Hover any source to see what it is.</p>
+    <div class="card">
+      <table>
+        <thead><tr><th style="width:22%">Who</th><th>Alert</th><th style="width:110px">Source</th></tr></thead>
+        <tbody>
+          <tr><td class="req">Larry Durso</td><td><b>Award</b> — <b>Marquis Who's Who</b> honoree for 47 years in financial services; NJ Monthly Five Star Wealth Manager every year since 2013; also Forbes' Best-in-State &amp; America's Top Wealth Advisors lists.</td><td><a class="hsrc" href="https://www.shorehavenwealth.com/our-team" target="_blank" title="Marquis Who's Who press release honoring Lawrence Durso; plus NJ Monthly Five Star and Forbes advisor-list recognition">Award ↗</a></td></tr>
+          <tr><td class="req">Mike Durso &amp; Mike Lombardi</td><td><b>Award</b> — named to the 2025 Advisors to Watch list.</td><td><a class="hsrc" href="https://www.shorehavenwealth.com/" target="_blank" title="Industry coverage announcing the 2025 Advisors to Watch recognition">Award ↗</a></td></tr>
+          <tr><td class="req">Michael Durso</td><td><b>Media</b> — quoted in <b>InvestmentNews</b> on big banks' growing crypto acceptance (2026); VettaFi "Road to Exchange" interview and moderated an Exchange Conference panel on wealth management &amp; sports betting; Diamond Consultants "From Next Gen to CEO" podcast.</td><td><a class="hsrc" href="https://www.advisorperspectives.com/videos/2025/03/07/the-road-to-exchange-featuring-michael-durso-of-shorehaven-wealth-partners" target="_blank" title="Advisor Perspectives / VettaFi video — Michael Durso 'Road to Exchange' interview; plus InvestmentNews crypto article quote">Media ↗</a></td></tr>
+          <tr><td class="req">ShoreHaven (firm)</td><td><b>Announcement</b> — ~$445M AUM; founded 2020 with Dynasty Financial Partners (Fidelity custodian). Nik Agharkar joined as Wealth Advisor.</td><td><a class="hsrc" href="https://www.wealthmanagement.com/wealth-management-industry-trends/father-son-team-departs-morgan-stanley-to-form-shorehaven-wealth-partners" target="_blank" title="WealthManagement.com — trade-press coverage of the firm's launch and growth">Press ↗</a></td></tr>
+        </tbody>
+      </table>
+      <div class="note" style="margin-top:14px"><b>Monitoring:</b> no new 2026 items yet — these are the latest public mentions. We'll log fresh awards, hires, panels, or press here as they land so we can react fast.</div>
+    </div>
+  </section>
+
+  <!-- ADS / SOCIAL -->
+  <section>
+    <div class="sec-title"><span class="bar"></span><h2>Ads &amp; social — last 60 days</h2></div>
+    <p class="sec-note">Meta Ads (Facebook + Instagram), the 60-day window from <b>Apr 18 to Jun 16, 2026</b>, vs. the prior 60 days.</p>
+    <div class="kpis">
+      <div class="kpi"><div class="num">177.2K</div><div class="lbl">Views</div><div class="sub">▲ 96.1%</div></div>
+      <div class="kpi"><div class="num">102.3K</div><div class="lbl">Reach / viewers</div><div class="sub">▲ 60.9%</div></div>
+      <div class="kpi"><div class="num">34,876</div><div class="lbl">Post engagements</div><div class="sub">▲ 100%</div></div>
+      <div class="kpi"><div class="num">5,629</div><div class="lbl">Landing page views</div><div class="sub">▲ 112.6%</div></div>
+      <div class="kpi"><div class="num">$1,670</div><div class="lbl">Ad spend · 60 days</div><div class="sub flat">4 ads</div></div>
+    </div>
+    <div class="note" style="margin-top:14px"><b>On spend:</b> $1,670 total across 4 ads over the full 60-day window (Apr 18 – Jun 16) — roughly $28/day. Engagement and landing-page traffic both more than doubled vs. the prior period.</div>
+  </section>
+
+  <!-- TRANSCRIPTS -->
+  <section>
+    <div class="sec-title"><span class="bar"></span><h2>Meeting transcripts</h2></div>
+    <p class="sec-note">Our recent monthly sessions, in one place (opens in MeetGeek).</p>
+    <div class="card">
+      <table>
+        <thead><tr><th style="width:62%">Meeting</th><th>Date</th><th>Transcript</th></tr></thead>
+        <tbody>
+          <tr><td class="req">ShoreHaven + P/C Monthly Catch-Up</td><td class="owner">May 21, 2026</td><td><a class="tlink" href="https://app.meetgeek.ai/meeting/f035a5d0-0554-46e6-adc8-d5c88cd338d6" target="_blank">View ↗</a></td></tr>
+          <tr><td class="req">ShoreHaven Meeting (Rescheduled)</td><td class="owner">Apr 23, 2026</td><td><a class="tlink" href="https://app.meetgeek.ai/meeting/bb53e069-f391-492f-8c7d-019f302968d4" target="_blank">View ↗</a></td></tr>
+          <tr><td class="req">ShoreHaven Meeting</td><td class="owner">Mar 11, 2026</td><td><a class="tlink" href="https://app.meetgeek.ai/meeting/cc4433fa-f2d5-458a-95de-fbb89ede995e" target="_blank">View ↗</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TRANSCRIPT QUOTES -->
+  <section>
+    <div class="sec-title"><span class="bar"></span><h2>Best quotes from the shoot transcripts</h2></div>
+    <p class="sec-note">Mined from the ShoreHaven shoot transcripts in Dropbox — ready-made pull quotes for captions, graphics, and clips. Click a name to switch. Lightly tidied for readability.</p>
+    <div class="qtabs">
+      <button class="qtab active" data-q="durso">Mike Durso</button>
+      <button class="qtab" data-q="lombardi">Mike Lombardi</button>
+      <button class="qtab" data-q="riley">Riley Sapp</button>
+      <button class="qtab" data-q="larry">Larry Durso</button>
+      <button class="qtab" data-q="cheryl">Cheryl</button>
+    </div>
+    <div class="qpanel active" data-q="durso">
+      <div class="card">
+        <div class="qname">Mike Durso</div>
+        <div class="qrole">Founding Partner · CEO &amp; CIO</div>
+        <ul class="quotes">
+          <li>One thing we thought was really important when we founded the firm was to make sure we were entrenched in the community — to give back to the local community and to charities we believed in.</li>
+          <li>We're big believers in clean water and taking plastic out of the oceans. It ties in well to our brand, but it's also something I'm genuinely passionate about.</li>
+          <li>If you can help someone and give them advice early on, you can shape their career and help them avoid pitfalls they never would've hit if they'd just talked to someone first.</li>
+          <li>Some of the most important lessons in my career were watching things bosses did and thinking, "If I ever manage people, I never want to act that way."</li>
+          <li>When you start your career, it's important to try different things and to fail — because that's where you learn the best lessons going forward.</li>
+          <li>Take interviews in areas you think you might never want to work. You don't have to take the job — take the interview, have the conversation, and ask people about their experience.</li>
+          <li>Lombardi is an incredible financial planner. He can take you from an idea, to a goal, through the plan, through implementation, all the way to what your future actually looks like.</li>
+          <li>The culture we've built at ShoreHaven comes from sports — learn discipline, learn how to be a good teammate, how to win and lose gracefully, and work hard even when you don't want to.</li>
+          <li>Compound interest is simple: you're building off a higher base, so you get better returns. Start with $100, earn 10%, and the next 10% is coming off $110.</li>
+          <li>I always make time to pay it forward with young people. I try to respond to everyone — that's a real focus of mine.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="qpanel" data-q="lombardi">
+      <div class="card">
+        <div class="qname">Mike Lombardi</div>
+        <div class="qrole">Founding Partner · Chief Planning Officer, CFP®</div>
+        <ul class="quotes">
+          <li>Everything starts with planning at ShoreHaven. To us, that's what matters most.</li>
+          <li>A "work-optional" lifestyle is the number one goal for many of our clients — and it looks a little different for everyone.</li>
+          <li>Larry, our chairman, has a saying: your brain is a muscle, and if you don't use it, it can atrophy. That's why we love clients who want to stay active in their post-retirement years.</li>
+          <li>Short-term goals usually start with budgeting and cash flow — really understanding the money going in versus the money going out.</li>
+          <li>A lot of people come to us with assets scattered everywhere and no way to keep track of them. Getting organized is often the first short-term win.</li>
+          <li>We do a really good job tracking down assets and pulling together old 401(k)s, so a client can finally see their entire financial picture in one place.</li>
+          <li>People come to us when they get busy and things get complicated. The more successful you are, the less time you have to keep track of it all — that's where we come in.</li>
+          <li>Think of us as your financial quarterback: we make sure your 401(k) is allocated properly, that the risk matches your tolerance, and that everything's working together.</li>
+          <li>It's one thing to track your money down once — the real value is a clear, ongoing picture and a plan that keeps working for you.</li>
+          <li>Going back to the quarterback analogy: our job is to make sure all the players are doing what they should be doing.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="qpanel" data-q="riley">
+      <div class="card">
+        <div class="qname">Riley Sapp</div>
+        <div class="qrole">Client Service Associate</div>
+        <ul class="quotes">
+          <li>My name is Riley Sapp and I'm a client service associate here at ShoreHaven. My job is to support clients day to day — with empathy, support, and care.</li>
+          <li>My background in wellness and leadership shaped how I view client service. It's elevated the way I can help people.</li>
+          <li>I communicate better, I'm more empathetic, and I pay a lot more attention to detail than I used to.</li>
+          <li>One of my goals is to really understand the business. I came in without a background in it — it meant a lot that Mike and Mike were willing to take a chance on me.</li>
+          <li>My goal is to one day be able to do what they do — form those connections, understand the business, and support our clients even more.</li>
+          <li>I'm more of a people person than a numbers person, so I lean toward the financial-planning side — though honestly both are incredible.</li>
+          <li>I've learned so much in just three months — I can't even imagine where I'll be in a couple of years.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="qpanel" data-q="larry">
+      <div class="card">
+        <div class="qname">Larry Durso</div>
+        <div class="qrole">Founding Partner · Chairman</div>
+        <ul class="quotes">
+          <li>Your brain is a muscle — if you don't use it, it atrophies. (The line the team repeats about staying active through retirement.)</li>
+          <li>Four-plus decades in the business, and a father-son, give-back-to-the-community ethos that runs through the whole firm.</li>
+        </ul>
+        <div class="note" style="margin-top:14px">Larry hasn't sat for a standalone on-camera interview yet, so there's no full transcript to pull from — these are themes the team consistently credits to him. Want the real thing? I can mine his segments from the August and December group shoots.</div>
+      </div>
+    </div>
+    <div class="qpanel" data-q="cheryl">
+      <div class="card">
+        <div class="qname">Cheryl</div>
+        <div class="qrole">ShoreHaven team</div>
+        <div class="note" style="margin-top:0">Cheryl comes up warmly in the team's interviews but doesn't have her own on-camera transcript on file yet. The moment she sits for one, I'll pull 10 quotes here. (Flag if you meant a different spelling or person.)</div>
+      </div>
+    </div>
+    <div class="note"><b>Coverage:</b> Mike Durso, Mike Lombardi, and Riley Sapp have full on-camera interviews (10 · 10 · 7 quotes). Larry and Cheryl don't have standalone transcripts yet — see their tabs.</div>
+    <script>
+    (function(){
+      var tabs=document.querySelectorAll('.qtab');
+      var panels=document.querySelectorAll('.qpanel');
+      tabs.forEach(function(t){t.addEventListener('click',function(){
+        var k=t.getAttribute('data-q');
+        tabs.forEach(function(x){x.classList.toggle('active', x===t);});
+        panels.forEach(function(p){p.classList.toggle('active', p.getAttribute('data-q')===k);});
+      });});
+    })();
+    </script>
+  </section>
+
+  <footer>
+    <p><b>Sources:</b> Meta Ads dashboard (ShoreHaven, Apr 18 – Jun 16, 2026) · ShoreHaven monthly catch-ups — May 21, Apr 23, Mar 11 (MeetGeek) · Gmail threads: SH Content For Approval, SH Stuff, SH Carousel, ShoreHaven World Cup content, SHOREHAVEN HOLD invites · Calendar (June 18 catch-up, June 25 / July 2 holds) · Player/Coach account notes.</p>
+    <p style="margin-top:6px">Player/Coach Advertising + Marketing &nbsp;·&nbsp; Confidential — prepared for ShoreHaven Wealth</p>
+  </footer>
+
+</div>
+</body>
+</html>
